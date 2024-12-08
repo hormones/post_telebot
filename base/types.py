@@ -36,8 +36,8 @@ class Post(object):
         message_id=None,
         message_ids=None,
         media_group_id=None,
-        anonymous=1,
-        approval_id=None,
+        anonymous=None,
+        approval_ids=None,
         approver_id=None,
         approval_result=None,
         approval_reply_id=None,
@@ -48,14 +48,14 @@ class Post(object):
         self.from_id: int = from_id
         # the first message id of the post
         self.message_id: int = message_id
-        # the message id of the post, in case of album, it's the first message id
+        # the message ids of the post, in case of album, it's the first message id
         self.message_ids: str = message_ids
         # the media group id of the post
         self.media_group_id: int = media_group_id
         # whether the post is anonymous
         self.anonymous: int = anonymous
-        # the message id of post forwoard in the approval channel
-        self.approval_id: int = approval_id
+        # the message ids of post forwoard in the approval channel
+        self.approval_ids: str = approval_ids
         # the approver id who approved the post
         self.approver_id: int = approver_id
         # the result of the approval, 1 for passed, 0 for rejected

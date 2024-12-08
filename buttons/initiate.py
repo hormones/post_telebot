@@ -4,8 +4,7 @@ from typing import cast
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 from base.types import Post
-from config import APPROVE_CHANNEL
-import db
+import db, config
 from buttons import approve
 
 _confirm = "initiate-confirm"
@@ -63,7 +62,7 @@ async def _handle_confirm(
         # copy text message to approve channel
         if not post.media_group_id:
             await context.bot.copy_message(
-                chat_id=APPROVE_CHANNEL,
+                chat_id=config.APPROVE_CHANNEL,
                 from_chat_id=user_id,
                 message_id=msg_id,
                 reply_markup=await approve.get_markup(post.message_id),
@@ -86,20 +85,20 @@ async def media_group_sender(context: ContextTypes.DEFAULT_TYPE):
 
     if not post.is_batch:
         await context.bot.copy_message(
-            chat_id=APPROVE_CHANNEL,
+            chat_id=config.APPROVE_CHANNEL,
             from_chat_id=post.from_id,
             message_id=post.message_id,
             reply_markup=await approve.get_markup(post.message_id),
         )
     else:
         message_ids = await context.bot.copy_messages(
-            chat_id=APPROVE_CHANNEL,
+            chat_id=config.APPROVE_CHANNEL,
             from_chat_id=post.from_id,
             message_ids=post.get_message_ids,
         )
         # add reply_markup by reply
         await context.bot.send_message(
-            chat_id=APPROVE_CHANNEL,
+            chat_id=config.APPROVE_CHANNEL,
             reply_to_message_id=message_ids[0].message_id,
             text="approve?",
             reply_markup=await approve.get_markup(post.message_id),

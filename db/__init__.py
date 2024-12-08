@@ -23,8 +23,8 @@ async def init():
                             message_ids  TEXT   NOT NULL,
                             media_group_id INTEGER UNIQUE,
                             anonymous   INTEGER DEFAULT 1,
-                            approval_id  INTEGER,
                             approver_id  INTEGER,
+                            approval_ids  TEXT,
                             approval_result  INTEGER,
                             approval_reply_id INTEGER,
                             create_time DATETIME DEFAULT CURRENT_TIMESTAMP);"""
@@ -65,14 +65,14 @@ def _upsert(table: str, obj: dict, type: str = None):
 def _update(table: str, obj: dict, key="id"):
     # filter parameters: id and create_time and None-value
     data = {
-        k: v for k, v in obj.items() if (k != key and k != "create_time" and v != None)
+        k: v for k, v in obj.items() if (k != key and k != "create_time" and not k.startswith("_") and v != None)
     }
     set_stmts = [f"{k} = ?" for k in data.keys()]
 
     sql = f"UPDATE {table} SET {', '.join(set_stmts)} WHERE {key} = ?"
     params = list(data.values())
     params.append(obj[key])
-    logging.debug(f"update {table} --> sql: {sql}, data: {util.dumps(obj)}")
+    logging.debug(f"update {table} --> sql: {sql}, data: {params}")
 
     cursor = _conn.cursor()
     rowcount = cursor.execute(sql, params).rowcount
@@ -97,7 +97,8 @@ def _query_one_by_field(table: str, field="id", value=None) -> tuple:
 def _query_all(table: str) -> tuple:
     logging.debug(f"query all: {table}")
     cursor = _conn.cursor()
-    result = cursor.execute(f"SELECT * FROM {table} ORDER BY create_time").fetchall()
+    result = cursor.execute(
+        f"SELECT * FROM {table} ORDER BY create_time").fetchall()
     cursor.close()
     return result
 
@@ -147,12 +148,12 @@ def post_update(obj: object):
     _update("post", obj.__dict__, "id")
 
 
-def post_exists_by_approval_id(approval_id):
-    return _exists("post", "approval_id", approval_id)
+def post_exists_by_approval_id(approval_ids):
+    return _exists("post", "approval_ids", approval_ids)
 
 
 def post_update_by_approval_id(dic: dict):
-    _update("post", dic, "approval_id")
+    _update("post", dic, "approval_ids")
 
 
 def post_query(id) -> Post:
@@ -160,8 +161,8 @@ def post_query(id) -> Post:
     return Post(*row) if row else None
 
 
-def post_query_by_approval_id(approval_id) -> Post:
-    row = _query_one_by_field("post", "approval_id", approval_id)
+def post_query_by_approval_id(approval_ids) -> Post:
+    row = _query_one_by_field("post", "approval_ids", approval_ids)
     return Post(*row) if row else None
 
 
@@ -190,7 +191,8 @@ def chat_banned(chat_id=None) -> str:
 def chats_count_banned() -> int:
     logging.debug(f"count chats banned")
     cursor = _conn.cursor()
-    row = cursor.execute(f"SELECT count(1) FROM chat WHERE status=0").fetchone()
+    row = cursor.execute(
+        f"SELECT count(1) FROM chat WHERE status=0").fetchone()
     cursor.close()
     return row[0]
 
@@ -200,7 +202,8 @@ def chats_banned(page_number=1, page_size=10) -> typing.List[Chat]:
     offset = (page_number - 1) * page_size
     logging.debug(f"query chats banned")
     cursor = _conn.cursor()
-    total = cursor.execute(f"SELECT count(1) FROM chat WHERE status=0").fetchone()[0]
+    total = cursor.execute(
+        f"SELECT count(1) FROM chat WHERE status=0").fetchone()[0]
     if total and offset < total:
         rows = cursor.execute(
             f"SELECT * FROM chat WHERE status=0 ORDER BY create_time LIMIT {page_size} OFFSET {offset}"

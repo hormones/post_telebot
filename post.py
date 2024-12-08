@@ -3,7 +3,7 @@ import logging
 from telegram import Update
 from telegram.ext import filters, ContextTypes, MessageHandler
 
-from base.types import post
+from base.types import Post
 from config import APP
 from base import util
 from buttons import initiate
